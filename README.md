@@ -1,87 +1,102 @@
-# 🔐 CKKS Homomorphic Encryption for VR Motion Telemetry
+# Homomorphic Encryption for VR Motion Telemetry
 
-This project demonstrates privacy-preserving analytics on VR telemetry data using the **CKKS scheme** from Microsoft SEAL. It includes scripts to test encryption setup and encrypt `controllerSpeed` values from pre-processed user motion CSV files.
+This repository demonstrates a small CKKS homomorphic-encryption pipeline for privacy-preserving analytics over VR motion telemetry.
 
----
+The current scripts focus on one real-valued telemetry feature, `controllerSpeed`, from normalized user-motion CSV files. The goal is to test whether a telemetry field can be encrypted and prepared for privacy-preserving aggregate computation without exposing raw motion values during the analytics step.
 
-## 📂 Project Overview
+## Why this exists
 
-- `testscript.py` – Tests your local SEAL setup with a sample normalized CSV  
-- `he.py` – Encrypts the `controllerSpeed` field across all normalized files for all users  
-- Outputs encrypted batches (not saved to disk, demo-level encryption)
+XR systems can produce sensitive behavioral traces: controller speed, hand motion, timing, reach patterns, and repeated interaction behavior. Even simple telemetry can become identifying when collected at scale.
 
-📄 The input folder is expected to be structured like:
+This project explores a narrow research question:
+
+> Can real-valued VR telemetry be prepared for encrypted analytics using CKKS-style approximate homomorphic encryption?
+
+## Project overview
+
+```text
+testscript.py   Local SEAL/Python wrapper smoke test using a sample normalized CSV
+he.py           Encrypts controllerSpeed values across normalized user/session files
+requirements.txt
 ```
+
+Expected input layout:
+
+```text
 chunk1/
 ├── user1/
 │   └── session1_normalized.csv
 ├── user2/
 │   └── session2_normalized.csv
-...
+└── ...
 ```
 
-Each CSV must contain the column: `controllerSpeed`.
+Each CSV is expected to contain:
 
----
+```text
+controllerSpeed
+```
 
-## 🧰 Technologies Used
+## What is encrypted
 
-- **Microsoft SEAL (via `seal` Python wrapper)**
-- **Python 3.9+**
-- **CKKS encryption scheme**
-- **pandas** – for CSV I/O
-- **pybind11** – to enable native SEAL bindings
+The `controllerSpeed` column is encrypted with CKKS parameters suitable for demo-scale approximate arithmetic:
 
----
+- Polynomial modulus degree: `8192`
+- Coefficient modulus bits: `[60, 40, 40, 60]`
+- Scale: `2^40`
 
-## ⚙️ How to Run
+Encrypted values are kept in memory as ciphertext objects. The current demo does not persist ciphertext batches to disk.
 
-1. Install dependencies:
+## Tech stack
+
+- Python 3.9+
+- Microsoft SEAL via Python bindings / wrapper
+- CKKS approximate homomorphic encryption
+- pandas for CSV loading
+- pybind11 for native binding support
+
+## How to run
+
+Install Python dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-2. Ensure Microsoft SEAL is properly installed and compiled for Python using `pybind11`.
+Ensure Microsoft SEAL and its Python bindings are installed and available in the active environment.
 
-3. Run environment test:
+Run a local setup smoke test:
+
 ```bash
 python testscript.py
 ```
 
-4. Run full encryption pipeline:
+Run the encryption pipeline:
+
 ```bash
 python he.py
 ```
 
----
+## Case study
 
-## 🔐 What Is Encrypted?
+See [docs/case-study.md](docs/case-study.md) for the research context, implementation decisions, and current limitations.
 
-- The column `saberSpeed` is encrypted using CKKS with:
-  - Polynomial modulus degree: `8192`
-  - Coefficient modulus: `[60, 40, 40, 60]`
-  - Scale: `2^40`
+## Current limitations
 
-Encrypted values are stored in memory as ciphertexts (not written to disk).
+- This is a research prototype, not a production privacy system.
+- The pipeline currently focuses on one real-valued feature.
+- Ciphertexts are not persisted or passed into a complete encrypted aggregation service.
+- CKKS introduces approximate numerical behavior; results require careful interpretation.
+- Production use would require security review, parameter validation, key management, and threat modeling.
 
----
+## Future work
 
-## ✅ Use Case
+- Add a small synthetic sample dataset so the pipeline can be tested without private telemetry.
+- Add encrypted aggregate examples such as mean controller speed.
+- Persist ciphertext outputs in a documented format.
+- Add a diagram connecting this repository to the broader VR telemetry privacy workflow.
+- Add unit tests around CSV validation and parameter setup.
 
-This script is ideal for:
-- Testing Microsoft SEAL integration
-- Learning how homomorphic encryption can secure real-valued telemetry
-- Academic research in **privacy-preserving analytics**
-
----
-
-## 👩‍💻 Author
-
-Created by [Jayasri](https://github.com/jayasrisng)  
-
----
-
-## 📄 License
+## License
 
 MIT License — use and adapt with attribution.
